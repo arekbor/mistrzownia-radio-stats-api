@@ -2,35 +2,65 @@ package api
 
 import (
 	"errors"
+	"log"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/arekbor/mistrzownia-radio-stats-api/utils"
 )
 
 func (a *Api) handleApiHealth(w http.ResponseWriter, r *http.Request) {
-	utils.WriteJSON(w, "It works!")
+	err := utils.WriteJSON(w, "It works!")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		log.Println(err)
+		return
+	}
 }
 
 func (a *Api) handlePaginatedStats(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Query().Get("page") == "" {
-		http.Error(w, errors.New("Invalid page number").Error(), http.StatusBadRequest)
+	var (
+		invalidPageError = errors.New("Invalid page or limit").Error()
+	)
+
+	if r.URL.Query().Get("page") == "" || r.URL.Query().Get("limit") == "" {
+		http.Error(w, invalidPageError, http.StatusBadRequest)
+		log.Println(invalidPageError)
 		return
 	}
 
 	page, err := strconv.Atoi(r.URL.Query().Get("page"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	if page < 0 {
-		http.Error(w, errors.New("Invalid page number").Error(), http.StatusBadRequest)
+		log.Println(err)
 		return
 	}
 
-	stats, err := a.store.GetPaginatedStats(page, 5)
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		log.Println(err)
+		return
+	}
+
+	maxLimit, err := strconv.Atoi(os.Getenv("MAX_PAGINATION_LIMIT"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		log.Println(err)
+		return
+	}
+
+	if limit > maxLimit || limit <= 0 || page <= 0 {
+		http.Error(w, invalidPageError, http.StatusBadRequest)
+		log.Println(invalidPageError)
+		return
+	}
+
+	stats, err := a.store.GetPaginatedStats(page, limit)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		log.Println(err)
 		return
 	}
 

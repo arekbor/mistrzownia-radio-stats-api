@@ -62,9 +62,14 @@ func (s *Store) GetPaginatedStats(page int, limit int) ([]types.Stats, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	q := fmt.Sprintf(`SELECT * FROM "%s" ORDER BY "DateTime" DESC`, statsDBTableName)
+	q := fmt.Sprintf(`SELECT * FROM "%s" 
+	ORDER BY "DateTime" DESC
+	LIMIT $1 OFFSET $2
+	`, statsDBTableName)
 
-	rows, err := s.Db.QueryContext(ctx, q)
+	offset := limit * (page - 1)
+
+	rows, err := s.Db.QueryContext(ctx, q, limit, offset)
 	if err != nil {
 		return nil, err
 	}

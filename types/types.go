@@ -12,3 +12,8 @@ type Stats struct {
 	YoutubeName string    `json:"youtubeName"`
 	Datetime    time.Time `json:"datetime"`
 }
+
+type ResponseStats struct {
+	Count int     `json:"count"`
+	Data  []Stats `json:"data"`
+}

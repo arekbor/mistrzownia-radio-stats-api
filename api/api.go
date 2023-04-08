@@ -3,9 +3,11 @@ package api
 import (
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/arekbor/mistrzownia-radio-stats-api/store"
+	"github.com/go-chi/cors"
 	"github.com/gorilla/mux"
 )
 
@@ -39,6 +41,13 @@ func New(
 
 func (a *Api) Init() error {
 	r := mux.NewRouter()
+
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{os.Getenv("CORS_URL")},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Content-Type", "Depth", "User-Agent", "X-File-Size", "X-Requested-With", "If-Modified-Since", "X-File-Name", "Cache-Control"},
+		AllowCredentials: true,
+	}))
 
 	a.prepareHandlers(r)
 

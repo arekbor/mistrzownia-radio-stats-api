@@ -96,3 +96,29 @@ func (s *Store) GetPaginatedStats(page int, limit int) ([]types.Stats, error) {
 
 	return slice, nil
 }
+
+func (s *Store) GetCountOfStats() (int, error) {
+	timeout, err := utils.GetMaxDbTimeout()
+	if err != nil {
+		return 0, err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	q := fmt.Sprintf(`select count(*) from "%s"`, statsDBTableName)
+
+	rows, err := s.Db.QueryContext(ctx, q)
+	if err != nil {
+		return 0, err
+	}
+	var count int
+
+	for rows.Next() {
+		err = rows.Scan(&count)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return count, nil
+}
